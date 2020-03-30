@@ -6,12 +6,18 @@ unzip SIRV_Set3_Sequences_170612a-ZIP.zip
 rm SIRV_Set3_Sequences_170612a-ZIP.zip
 mv SIRV_Set3_Sequences_170612a\ \(ZIP\)/ SIRV_Set3_Sequences_170612a
 cp SIRV_Set3_Sequences_170612a/SIRV_isoforms_multi-fasta_170612a.fasta SIRV.fa
-cp SIRV_Set3_Sequences_170612a/SIRV_ERCCs_multi-fasta_170612a.fasta ERCC.fa
 ```
-These are the SIRV/ERCC files we will be using:
-* SIRV_ERCCs_multi-fasta_170612a.fasta, multi-fasta files with individual lines for each of the 92 ERCC gene sequences
+
+These are the SIRV files we will be using:
 * SIRV_isoforms_multi-fasta_170612a.fasta, multi-fasta files with individual lines for each of the 7 SIRV isoform gene sequences
 * SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf, gtf file with correct isoform annotations for the SIRVs only
+
+## Download the ERCC fasta from ENCODE
+```
+wget https://www.encodeproject.org/files/ENCFF001RTP/@@download/ENCFF001RTP.fasta.gz
+gunzip ENCFF001RTP.fasta.gz
+mv ENCFF001RTP.fasta ERCC.fa
+```
 
 ## GTF file processing
 First, create an ERCC GTF by running Diane's script on the ERCC fasta (merge_encode_annotations.py found [here](https://github.com/detrout/long-rna-seq-condor/blob/master/woldrnaseq/merge_encode_annotations.py), last commit: c990527).
