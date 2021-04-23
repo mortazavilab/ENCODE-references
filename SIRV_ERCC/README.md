@@ -1,53 +1,37 @@
 # SIRVs
-## Download the SIRV set that our lab uses from Lexogen
-```
-wget https://www.lexogen.com/wp-content/uploads/2018/08/SIRV_Set3_Sequences_170612a-ZIP.zip
-unzip SIRV_Set3_Sequences_170612a-ZIP.zip
-rm SIRV_Set3_Sequences_170612a-ZIP.zip
-mv SIRV_Set3_Sequences_170612a\ \(ZIP\)/ SIRV_Set3_Sequences_170612a
-cp SIRV_Set3_Sequences_170612a/SIRV_isoforms_multi-fasta_170612a.fasta SIRV.fa
+## Download SIRV set 4 reference files from Lexogen
+```bash
+wget https://www.lexogen.com/wp-content/uploads/2020/07/SIRV_Set4_Sequences_200709a.zip
+unzip SIRV_Set4_Sequences_200709a.zip
+rm SIRV_Set4_Sequences_200709a.zip
 ```
 
-These are the SIRV files we will be using:
-* SIRV_isoforms_multi-fasta_170612a.fasta, multi-fasta files with individual lines for each of the 7 SIRV isoform gene sequences
-* SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf, gtf file with correct isoform annotations for the SIRVs only
-
-## Download the ERCC fasta from ENCODE
-```
-wget https://www.encodeproject.org/files/ENCFF001RTP/@@download/ENCFF001RTP.fasta.gz
-gunzip ENCFF001RTP.fasta.gz
-mv ENCFF001RTP.fasta ERCC.fa
+## Concatenate the SIRV sequences and the longSIRV sequences into one fasta.
+* `SIRV_isoforms_multi-fasta_200709a.fasta` contains the sequences for each of the SIRV chromosomes
+* `SIRV_longSIRVs_multi-fasta_200709a.fasta` contains the sequences for each of the longSIRV chromosomes
+```bash
+cat SIRV_Set4_Sequences_200709a/SIRV_isoforms_multi-fasta_200709a.fasta > sirv4.fasta
+cat SIRV_Set4_Sequences_200709a/SIRV_longSIRVs_multi-fasta_200709a.fasta >> sirv4.fasta
 ```
 
-## GTF file processing
-First, create an ERCC GTF by running Diane's script on the ERCC fasta (merge_encode_annotations.py found [here](https://github.com/detrout/long-rna-seq-condor/blob/master/woldrnaseq/merge_encode_annotations.py), last commit: c990527).
-(requires xopen from pypi to be installed)
-```
-python3 merge_encode_annotations.py \
-  -o ERCC-spikein.gtf \
-  ERCC.fa
-```
+ ## GTF
+ We attained a GTF directly from Lexogen, as they did not host a GTF split up by SIRV and longSIRV chromosomes. For convenience, the GTF has been included in this repo.
 
-It came to light that the SIRV GTF allows transcripts from different strands to belong to the same gene, which TALON does not support. Therefore, we need to manually reconfigure the GTF file so that genes belong to only one strand.
-```
-cp SIRV_Set3_Sequences_170612a/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf SIRV-spikein_raw.gtf
-python separate_multistrand_genes.py --f SIRV-spikein_raw.gtf --o SIRV-spikein_gene-sep.gtf
-```
+Remove the ERCCs from the GTF so that we're left with the SIRVs and longSIRVs.
+ ```bash
+grep -v ERCC ERCC_SIRVs_longSIRVs_multi-fasta.gtf > sirv4.gtf
+ ```
 
-For TALON to work, we need the GTF file to have gene and transcript entries. So we need to run the TALON utility on SIRV-spikein_gene-sep.gtf and on ERCC-spikein_raw.gtf to get this.
-```
-source activate TALON-v5.0
-talon_reformat_gtf -gtf SIRV-spikein_gene-sep.gtf
-talon_reformat_gtf -gtf ERCC-spikein.gtf
-```
-This gives us SIRV-spikein_gene-sep_reformatted.gtf and ERCC-spikein_reformatted.gtf
+ It came to light that the SIRV GTF allows transcripts from different strands to belong to the same gene, which TALON does not support. Therefore, we need to manually reconfigure the GTF file so that genes belong to only one strand.
+ ```bash
+python separate_multistrand_genes.py \
+  --f sirv4.gtf \
+  --o sirv4_multistrand.gtf
+ ```
 
-## Make SIRV splice junction file
-```
-source activate mypython3.7.2
-TC_dir=~/TranscriptClean-2.0.2
-python $TC_dir/accessory_scripts/get_SJs_from_gtf.py \
-      --f SIRV-spikein_gene-sep_reformatted.gtf \
-      --g SIRV.fa \
-      --o SIRV_SJs.tsv
-```
+For TALON to work, we need the GTF file to have gene and transcript entries. So we need to run the TALON utility on sirv4_multistrand.gtf to get this.
+```bash
+talon_reformat_gtf \
+  -gtf sirv4_multistrand.gtf
+mv sirv4_multistrand_reformatted.gtf sirv4.gtf
+ ```
